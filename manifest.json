@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "实时语音翻译助手",
+  "version": "1.0.0",
+  "description": "实时识别外语视频语音并翻译成中文字幕显示",
+  
+  "permissions": [
+    "activeTab",
+    "tabCapture",
+    "storage",
+    "scripting"
+  ],
+  
+  "host_permissions": [
+    "https://*/*"
+  ],
+  
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["https://*/*"],
+      "js": ["src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "实时语音翻译"
+  },
+  
+  "icons": {
+    "16": "icons/icon16.svg",
+    "48": "icons/icon48.svg",
+    "128": "icons/icon128.svg"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["src/utils/*.js"],
+      "matches": ["https://*/*"]
+    }
+  ]
+}

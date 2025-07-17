@@ -1,0 +1,107 @@
+/* 语音翻译字幕覆盖层样式 */
+
+#voice-translator-overlay {
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(30, 30, 30, 0.9)) !important;
+  color: #ffffff !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  z-index: 2147483647 !important; /* 最高层级 */
+  max-width: 80% !important;
+  min-width: 200px !important;
+  text-align: center !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  white-space: pre-wrap !important;
+}
+
+/* 显示状态 */
+#voice-translator-overlay.show {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(0) !important;
+}
+
+/* 隐藏状态 */
+#voice-translator-overlay.voice-translator-hidden {
+  opacity: 0 !important;
+  transform: translateX(-50%) translateY(10px) !important;
+}
+
+/* 加载状态动画 */
+#voice-translator-overlay.loading::after {
+  content: '' !important;
+  display: inline-block !important;
+  width: 12px !important;
+  height: 12px !important;
+  margin-left: 8px !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-top: 2px solid #ffffff !important;
+  border-radius: 50% !important;
+  animation: voice-translator-spin 1s linear infinite !important;
+}
+
+/* 旋转动画 */
+@keyframes voice-translator-spin {
+  0% {
+    transform: rotate(0deg) !important;
+  }
+  100% {
+    transform: rotate(360deg) !important;
+  }
+}
+
+/* 错误状态样式 */
+#voice-translator-overlay.error {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.9), rgba(185, 28, 28, 0.9)) !important;
+  border-color: rgba(220, 53, 69, 0.3) !important;
+}
+
+/* 成功状态样式 */
+#voice-translator-overlay.success {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.9), rgba(25, 135, 84, 0.9)) !important;
+  border-color: rgba(40, 167, 69, 0.3) !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  #voice-translator-overlay {
+    bottom: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    transform: none !important;
+    max-width: none !important;
+    font-size: 14px !important;
+    padding: 10px 16px !important;
+  }
+  
+  #voice-translator-overlay.show {
+    transform: none !important;
+  }
+  
+  #voice-translator-overlay.voice-translator-hidden {
+    transform: translateY(10px) !important;
+  }
+}
+
+/* 确保不被其他样式覆盖 */
+#voice-translator-overlay * {
+  box-sizing: border-box !important;
+}
+
+/* 防止与页面元素冲突 */
+body.voice-translator-active {
+  /* 可以在这里添加页面激活时的样式 */
+}

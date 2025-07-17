@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实时语音翻译</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- 头部 -->
+    <div class="header">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 7.5V9M21 16V14L15 14.5V16M21 11V13L15 12.5V11M9 9V7L3 7.5V9M9 16V14L3 14.5V16M9 11V13L3 12.5V11" fill="currentColor"/>
+        </svg>
+        <span>语音翻译</span>
+      </div>
+      <div class="status-indicator" id="statusIndicator">
+        <span class="status-dot"></span>
+        <span class="status-text" id="statusText">未激活</span>
+      </div>
+    </div>
+
+    <!-- 主控制区域 -->
+    <div class="main-controls">
+      <button class="toggle-btn" id="toggleBtn">
+        <svg class="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+        </svg>
+        <svg class="icon-stop" width="20" height="20" viewBox="0 0 24 24" fill="none" style="display: none;">
+          <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+        </svg>
+        <span class="btn-text" id="btnText">开始翻译</span>
+      </button>
+    </div>
+
+    <!-- 状态信息 -->
+    <div class="status-info" id="statusInfo">
+      <div class="info-item">
+        <span class="info-label">当前页面:</span>
+        <span class="info-value" id="currentUrl">加载中...</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">识别语言:</span>
+        <span class="info-value" id="detectedLang">自动检测</span>
+      </div>
+    </div>
+
+    <!-- 设置区域 -->
+    <div class="settings-section">
+      <div class="section-header">
+        <h3>API 配置</h3>
+        <button class="settings-toggle" id="settingsToggle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5A3.5 3.5 0 0 1 15.5 12A3.5 3.5 0 0 1 12 15.5M19.43 12.98C19.47 12.66 19.5 12.34 19.5 12C19.5 11.66 19.47 11.34 19.43 11.02L21.54 9.37C21.73 9.22 21.78 8.95 21.66 8.73L19.66 5.27C19.54 5.05 19.27 4.97 19.05 5.05L16.56 6.05C16.04 5.65 15.48 5.32 14.87 5.07L14.5 2.42C14.46 2.18 14.25 2 14 2H10C9.75 2 9.54 2.18 9.5 2.42L9.13 5.07C8.52 5.32 7.96 5.66 7.44 6.05L4.95 5.05C4.73 4.96 4.46 5.05 4.34 5.27L2.34 8.73C2.21 8.95 2.27 9.22 2.46 9.37L4.57 11.02C4.53 11.34 4.5 11.67 4.5 12C4.5 12.33 4.53 12.66 4.57 12.98L2.46 14.63C2.27 14.78 2.21 15.05 2.34 15.27L4.34 18.73C4.46 18.95 4.73 19.03 4.95 18.95L7.44 17.95C7.96 18.35 8.52 18.68 9.13 18.93L9.5 21.58C9.54 21.82 9.75 22 10 22H14C14.25 22 14.46 21.82 14.5 21.58L14.87 18.93C15.48 18.68 16.04 18.34 16.56 17.95L19.05 18.95C19.27 19.04 19.54 18.95 19.66 18.73L21.66 15.27C21.78 15.05 21.73 14.78 21.54 14.63L19.43 12.98Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="settings-content" id="settingsContent">
+        <div class="input-group">
+          <label for="appId">百度翻译 APP ID:</label>
+          <input type="text" id="appId" placeholder="请输入APP ID">
+        </div>
+        
+        <div class="input-group">
+          <label for="appKey">百度翻译密钥:</label>
+          <input type="password" id="appKey" placeholder="请输入密钥">
+        </div>
+        
+        <div class="button-group">
+          <button class="btn-secondary" id="testBtn">测试连接</button>
+          <button class="btn-primary" id="saveBtn">保存配置</button>
+        </div>
+        
+        <div class="help-text">
+          <p>💡 <a href="https://fanyi-api.baidu.com/" target="_blank">获取百度翻译API密钥</a></p>
+          <p>🆓 每月免费额度：200万字符</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部信息 -->
+    <div class="footer">
+      <div class="version">v1.0.0</div>
+      <div class="links">
+        <a href="#" id="helpLink">帮助</a>
+        <a href="#" id="feedbackLink">反馈</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

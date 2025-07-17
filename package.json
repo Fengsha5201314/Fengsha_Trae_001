@@ -1,0 +1,53 @@
+{
+  "name": "voice-translator-extension",
+  "version": "1.0.0",
+  "description": "A real-time voice translation browser extension",
+  "main": "src/background.js",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "build": "node scripts/build.js",
+    "build:prod": "NODE_ENV=production node scripts/build.js",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "clean": "rimraf dist",
+    "test": "echo \"No tests specified\" && exit 0",
+    "package": "npm run build:prod && cd dist && zip -r ../voice-translator-extension.zip .",
+    "install:chrome": "echo \"Please manually load the dist folder in Chrome extensions page\""
+  },
+  "keywords": [
+    "voice",
+    "translation",
+    "browser-extension",
+    "chrome-extension",
+    "speech-recognition",
+    "real-time",
+    "subtitle",
+    "baidu-translate"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/voice-translator-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/voice-translator-extension/issues"
+  },
+  "homepage": "https://github.com/yourusername/voice-translator-extension#readme",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "dependencies": {
+    "crypto-js": "^4.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "chokidar": "^3.5.3",
+    "rimraf": "^3.0.2"
+  },
+  "browserslist": [
+    "Chrome >= 88",
+    "Edge >= 88"
+  ]
+}
