@@ -65,7 +65,7 @@ class TranslationService {
     }
   }
 
-  // 调用百度翻译API
+  // 调用百度翻译API - 通过background script解决CORS问题
   async callTranslationAPI(text, from, to) {
     const { appid, key } = this.config;
     
@@ -73,60 +73,35 @@ class TranslationService {
       throw new Error('请先配置百度翻译API密钥');
     }
 
-    const salt = Date.now().toString();
-    const sign = this.generateSign(appid, text, salt, key);
-    
-    const params = new URLSearchParams({
-      q: text,
-      from: from,
-      to: to,
-      appid: appid,
-      salt: salt,
-      sign: sign
-    });
-
     let lastError;
     
     // 重试机制
     for (let attempt = 1; attempt <= this.retryCount; attempt++) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-        
-        const response = await fetch('https://fanyi-api.baidu.com/api/trans/vip/translate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: params,
-          signal: controller.signal
+        const result = await this.sendMessageToBackground({
+          action: 'TRANSLATE_TEXT',
+          data: {
+            text: text,
+            config: {
+              appid: appid,
+              key: key
+            }
+          }
         });
         
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP错误: ${response.status}`);
+        if (result.success) {
+          return {
+            originalText: text,
+            translatedText: result.result.translatedText,
+            detectedLanguage: result.result.detectedLanguage,
+            fromLanguage: from,
+            toLanguage: to,
+            cached: false,
+            timestamp: result.result.timestamp
+          };
+        } else {
+          throw new Error(result.error);
         }
-        
-        const data = await response.json();
-        
-        if (data.error_code) {
-          throw new Error(this.getErrorMessage(data.error_code, data.error_msg));
-        }
-        
-        if (!data.trans_result || !data.trans_result[0]) {
-          throw new Error('翻译结果格式错误');
-        }
-        
-        return {
-          originalText: text,
-          translatedText: data.trans_result[0].dst,
-          detectedLanguage: data.from || from,
-          fromLanguage: from,
-          toLanguage: to,
-          cached: false,
-          timestamp: Date.now()
-        };
         
       } catch (error) {
         lastError = error;
@@ -141,6 +116,23 @@ class TranslationService {
     }
     
     throw lastError;
+  }
+
+  // 发送消息到background script
+  async sendMessageToBackground(message) {
+    return new Promise((resolve, reject) => {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage(message, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response);
+          }
+        });
+      } else {
+        reject(new Error('Chrome扩展环境不可用'));
+      }
+    });
   }
 
   // 生成百度翻译API签名

@@ -9,6 +9,9 @@ class PopupController {
   }
 
   async init() {
+    // 防止页面自动关闭
+    this.preventAutoClose();
+    
     // 获取当前标签页
     await this.getCurrentTab();
     
@@ -22,6 +25,30 @@ class PopupController {
     this.updateUI();
     
     console.log('Popup 控制器已初始化');
+  }
+
+  // 防止页面自动关闭
+  preventAutoClose() {
+    // 阻止默认的关闭行为
+    window.addEventListener('beforeunload', (e) => {
+      // 只有在用户明确要关闭时才允许
+      if (!this.userRequestedClose) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+    
+    // 监听键盘事件，防止意外关闭
+    document.addEventListener('keydown', (e) => {
+      // 防止Escape键关闭popup
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
+    
+    // 确保popup保持打开状态
+    this.userRequestedClose = false;
   }
 
   // 获取当前活动标签页
@@ -218,10 +245,18 @@ class PopupController {
       testBtn.classList.add('loading');
       testBtn.textContent = '测试中...';
 
-      // 简单的测试翻译
+      // 简单的测试翻译 <mcreference link="https://baidufanyi.apifox.cn/api-26880827" index="2">2</mcreference>
       const testText = 'Hello';
       const salt = Date.now().toString();
       const sign = this.generateSign(appId, testText, salt, appKey);
+      
+      console.log('测试参数:', {
+        appid: appId,
+        q: testText,
+        salt: salt,
+        sign: sign,
+        signString: appId + testText + salt + appKey
+      });
       
       const params = new URLSearchParams({
         q: testText,
@@ -241,12 +276,33 @@ class PopupController {
       });
 
       const data = await response.json();
+      console.log('API响应:', data);
       
       if (data.error_code) {
-        throw new Error(`API错误: ${data.error_msg}`);
+        // 显示具体的错误信息 <mcreference link="https://baidufanyi.apifox.cn/api-26880827" index="2">2</mcreference>
+        const errorMessages = {
+          '52001': 'APP ID无效',
+          '52002': '签名错误',
+          '52003': '访问频率受限',
+          '54001': '签名错误，请检查您的签名生成方法',
+          '54003': '访问权限受限',
+          '54004': '账户余额不足',
+          '54005': '长query请求频繁',
+          '58000': '客户端IP非法',
+          '58001': '译文语言方向不支持',
+          '58002': '服务当前已关闭',
+          '90107': '认证未通过或未生效'
+        };
+        const errorMsg = errorMessages[data.error_code] || data.error_msg || '未知错误';
+        throw new Error(`API错误 ${data.error_code}: ${errorMsg}`);
       }
 
-      this.showNotification('API连接测试成功', 'success');
+      if (data.trans_result && data.trans_result.length > 0) {
+        const result = data.trans_result[0];
+        this.showNotification(`API连接测试成功！翻译结果: "${result.src}" → "${result.dst}"`, 'success');
+      } else {
+        this.showNotification('API连接测试成功', 'success');
+      }
     } catch (error) {
       console.error('测试连接失败:', error);
       this.showNotification('连接测试失败: ' + error.message, 'error');
@@ -512,7 +568,9 @@ class PopupController {
       fontWeight: '500',
       zIndex: '10000',
       transform: 'translateX(100%)',
-      transition: 'transform 0.3s ease'
+      transition: 'transform 0.3s ease',
+      maxWidth: '280px',
+      wordWrap: 'break-word'
     });
 
     // 设置背景色
@@ -531,7 +589,8 @@ class PopupController {
       notification.style.transform = 'translateX(0)';
     }, 100);
 
-    // 自动隐藏
+    // 自动隐藏 - 延长显示时间以便用户阅读详细信息
+    const hideDelay = type === 'error' ? 5000 : 4000; // 错误信息显示更长时间
     setTimeout(() => {
       notification.style.transform = 'translateX(100%)';
       setTimeout(() => {
@@ -539,7 +598,7 @@ class PopupController {
           notification.parentNode.removeChild(notification);
         }
       }, 300);
-    }, 3000);
+    }, hideDelay);
   }
 
   // 打开帮助页面

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>百度翻译API测试工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #007bff;
+        }
+
+        .config-section h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+
+        #customProxyGroup {
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            border: 1px solid #e1e5e9;
+        }
+
+        #corsProxy {
+            background-color: #fff;
+        }
+
+        #corsProxy option {
+            padding: 8px;
+            color: #333;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        }
+
+        .result-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 25px;
+            border-left: 5px solid #28a745;
+        }
+
+        .result-section.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .result-section h3 {
+            color: #28a745;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .result-section.error h3 {
+            color: #dc3545;
+        }
+
+        .result-content {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e1e5e9;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.success {
+            background: #28a745;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+
+        .status-indicator.warning {
+            background: #ffc107;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .info-box h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .col {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 百度翻译API测试工具</h1>
+            <p>独立测试百度翻译API调用功能</p>
+        </div>
+
+        <div class="content">
+            <!-- API配置区域 -->
+            <div class="config-section">
+                <h3>🔧 API配置</h3>
+                
+                <div class="info-box">
+                    <h4>📋 获取API密钥步骤：</h4>
+                    <ol>
+                        <li>访问 <a href="https://fanyi-api.baidu.com/" target="_blank">百度翻译开放平台</a></li>
+                        <li>注册并登录账号</li>
+                        <li>创建应用获取APP ID和密钥</li>
+                        <li>将APP ID和密钥填入下方表单</li>
+                    </ol>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="appId">APP ID *</label>
+                            <input type="text" id="appId" placeholder="请输入百度翻译APP ID">
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="appKey">APP Key *</label>
+                            <input type="password" id="appKey" placeholder="请输入百度翻译APP Key">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="corsProxy">CORS代理:</label>
+                    <select id="corsProxy">
+                        <option value="">直接调用（可能被CORS阻止）</option>
+                        <option value="https://cors-anywhere.herokuapp.com/">cors-anywhere.herokuapp.com</option>
+                        <option value="https://api.allorigins.win/raw?url=">allorigins.win</option>
+                        <option value="custom">自定义代理</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customProxyGroup" style="display: none;">
+                    <label for="customProxy">自定义代理URL:</label>
+                    <input type="text" id="customProxy" placeholder="例如: https://your-proxy.com/">
+                </div>
+
+                <div class="form-group">
+                    <button class="btn primary" onclick="saveConfig()">💾 保存配置</button>
+                    <button class="btn" onclick="loadConfig()">📂 加载配置</button>
+                    <button class="btn" onclick="clearConfig()">🗑️ 清除配置</button>
+                </div>
+                
+                <div class="info-box" style="margin-top: 15px; padding: 10px; background-color: #e8f4fd; border-radius: 5px; border-left: 4px solid #2196F3;">
+                    <h4 style="margin: 0 0 8px 0; color: #1976D2;">💡 CORS代理说明</h4>
+                    <p style="margin: 0; font-size: 13px; color: #555;">
+                        由于浏览器安全策略，直接调用百度翻译API可能被CORS阻止。选择一个代理服务可以解决此问题：<br>
+                        • <strong>cors-anywhere</strong>: 免费但有使用限制<br>
+                        • <strong>allorigins</strong>: 稳定的免费代理服务<br>
+                        • <strong>自定义代理</strong>: 使用您自己的代理服务器
+                    </p>
+                </div>
+            </div>
+
+            <!-- 翻译测试区域 -->
+            <div class="config-section">
+                <h3>🧪 翻译测试</h3>
+                
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="sourceText">源文本 *</label>
+                            <textarea id="sourceText" placeholder="请输入要翻译的文本..." rows="4">Hello, this is a test for Baidu Translation API. How are you today?</textarea>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="fromLang">源语言</label>
+                            <select id="fromLang">
+                                <option value="auto">自动检测</option>
+                                <option value="en">英语</option>
+                                <option value="zh">中文</option>
+                                <option value="ja">日语</option>
+                                <option value="ko">韩语</option>
+                                <option value="fr">法语</option>
+                                <option value="de">德语</option>
+                                <option value="es">西班牙语</option>
+                                <option value="ru">俄语</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="toLang">目标语言</label>
+                            <select id="toLang">
+                                <option value="zh">中文</option>
+                                <option value="en">英语</option>
+                                <option value="ja">日语</option>
+                                <option value="ko">韩语</option>
+                                <option value="fr">法语</option>
+                                <option value="de">德语</option>
+                                <option value="es">西班牙语</option>
+                                <option value="ru">俄语</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button class="btn success" onclick="translateText()" id="translateBtn">
+                        🚀 开始翻译
+                    </button>
+                    <button class="btn" onclick="testPresetTexts()">📝 测试预设文本</button>
+                    <button class="btn" onclick="clearResults()">🧹 清除结果</button>
+                </div>
+            </div>
+
+            <!-- 结果显示区域 -->
+            <div id="resultContainer" class="hidden">
+                <div class="result-section" id="resultSection">
+                    <h3 id="resultTitle">📊 翻译结果</h3>
+                    <div class="result-content" id="resultContent"></div>
+                </div>
+            </div>
+
+            <!-- 测试历史 -->
+            <div id="historyContainer" class="hidden">
+                <div class="config-section">
+                    <h3>📜 测试历史</h3>
+                    <div id="historyContent"></div>
+                    <button class="btn danger" onclick="clearHistory()">🗑️ 清除历史</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let testHistory = [];
+        let currentConfig = {
+            appId: '',
+            appKey: '',
+            corsProxy: '',
+            customProxy: ''
+        };
+
+        // CORS代理选择处理
+        document.addEventListener('DOMContentLoaded', function() {
+            const corsProxySelect = document.getElementById('corsProxy');
+            const customProxyGroup = document.getElementById('customProxyGroup');
+            
+            corsProxySelect.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customProxyGroup.style.display = 'block';
+                } else {
+                    customProxyGroup.style.display = 'none';
+                }
+            });
+            
+            loadConfig();
+        });
+
+        // 页面加载时初始化
+        window.addEventListener('load', function() {
+            loadConfig();
+            loadHistory();
+        });
+
+        // 保存配置
+        function saveConfig() {
+            const appId = document.getElementById('appId').value.trim();
+            const appKey = document.getElementById('appKey').value.trim();
+            const corsProxy = document.getElementById('corsProxy').value;
+            const customProxy = document.getElementById('customProxy').value.trim();
+
+            if (!appId || !appKey) {
+                showResult('error', '配置错误', '请填写完整的APP ID和APP Key');
+                return;
+            }
+
+            const config = { appId, appKey, corsProxy, customProxy };
+            localStorage.setItem('baiduApiConfig', JSON.stringify(config));
+            currentConfig = config;
+            
+            showResult('success', '配置保存成功', `APP ID: ${appId}\nAPP Key: ${appKey.replace(/./g, '*')}\nCORS代理: ${corsProxy || '直接调用'}`);
+        }
+
+        // 加载配置
+        function loadConfig() {
+            const saved = localStorage.getItem('baiduApiConfig');
+            if (saved) {
+                try {
+                    const config = JSON.parse(saved);
+                    document.getElementById('appId').value = config.appId || '';
+                    document.getElementById('appKey').value = config.appKey || '';
+                    document.getElementById('corsProxy').value = config.corsProxy || '';
+                    document.getElementById('customProxy').value = config.customProxy || '';
+                    
+                    // 处理自定义代理显示
+                    const customProxyGroup = document.getElementById('customProxyGroup');
+                    if (config.corsProxy === 'custom') {
+                        customProxyGroup.style.display = 'block';
+                    } else {
+                        customProxyGroup.style.display = 'none';
+                    }
+                    
+                    currentConfig = config;
+                    showResult('success', '配置加载成功', '已从本地存储加载API配置');
+                } catch (e) {
+                    showResult('error', '配置加载失败', '本地配置数据损坏');
+                }
+            }
+        }
+
+        // 清除配置
+        function clearConfig() {
+            localStorage.removeItem('baiduApiConfig');
+            document.getElementById('appId').value = '';
+            document.getElementById('appKey').value = '';
+            document.getElementById('corsProxy').value = '';
+            document.getElementById('customProxy').value = '';
+            document.getElementById('customProxyGroup').style.display = 'none';
+            currentConfig = null;
+            showResult('success', '配置已清除', '所有API配置已从本地存储中删除');
+        }
+
+        // 翻译文本
+        async function translateText() {
+            const sourceText = document.getElementById('sourceText').value.trim();
+            const fromLang = document.getElementById('fromLang').value;
+            const toLang = document.getElementById('toLang').value;
+
+            if (!sourceText) {
+                showResult('error', '输入错误', '请输入要翻译的文本');
+                return;
+            }
+
+            if (!currentConfig || !currentConfig.appId || !currentConfig.appKey) {
+                showResult('error', '配置错误', '请先配置并保存百度翻译API密钥');
+                return;
+            }
+
+            // 显示加载状态
+            const translateBtn = document.getElementById('translateBtn');
+            const originalText = translateBtn.innerHTML;
+            translateBtn.innerHTML = '<span class="loading"></span>翻译中...';
+            translateBtn.disabled = true;
+
+            try {
+                const result = await callBaiduTranslateAPI(sourceText, fromLang, toLang);
+                
+                if (result.success) {
+                    const translatedText = result.data.trans_result[0].dst;
+                    const resultText = `原文: ${sourceText}\n\n译文: ${translatedText}\n\n语言: ${fromLang} → ${toLang}\n时间: ${new Date().toLocaleString()}`;
+                    
+                    showResult('success', '翻译成功', resultText);
+                    
+                    // 添加到历史记录
+                    addToHistory({
+                        source: sourceText,
+                        target: translatedText,
+                        fromLang,
+                        toLang,
+                        timestamp: new Date().toLocaleString()
+                    });
+                } else {
+                    showResult('error', '翻译失败', `错误信息: ${result.error}\n\n详细信息: ${JSON.stringify(result.details, null, 2)}`);
+                }
+            } catch (error) {
+                showResult('error', '网络错误', `请求失败: ${error.message}\n\n可能原因:\n1. 网络连接问题\n2. API密钥错误\n3. 服务器响应异常`);
+            } finally {
+                // 恢复按钮状态
+                translateBtn.innerHTML = originalText;
+                translateBtn.disabled = false;
+            }
+        }
+
+        // 调用百度翻译API
+        async function callBaiduTranslateAPI(query, from, to) {
+            const appId = currentConfig.appId;
+            const appKey = currentConfig.appKey;
+            const salt = Date.now().toString();
+            
+            // 按照百度官方文档要求：签名生成时q不需要URL编码
+            const signStr = appId + query + salt + appKey;
+            const sign = generateSign(signStr);
+            
+            // 构建请求参数（发送时需要对q进行URL编码）
+            const params = new URLSearchParams({
+                q: query,  // URLSearchParams会自动进行URL编码
+                from: from,
+                to: to,
+                appid: appId,
+                salt: salt,
+                sign: sign
+            });
+
+            // 构建请求URL，考虑CORS代理
+            let url = 'https://fanyi-api.baidu.com/api/trans/vip/translate';
+            let corsProxy = currentConfig.corsProxy || '';
+            
+            if (corsProxy === 'custom') {
+                corsProxy = currentConfig.customProxy || '';
+            }
+            
+            if (corsProxy) {
+                if (corsProxy === 'https://api.allorigins.win/raw?url=') {
+                    url = corsProxy + encodeURIComponent(url);
+                } else {
+                    url = corsProxy + url;
+                }
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json'
+                    },
+                    body: params.toString()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.error_code) {
+                    return {
+                        success: false,
+                        error: getErrorMessage(data.error_code),
+                        details: data
+                    };
+                }
+
+                return {
+                    success: true,
+                    data: data
+                };
+            } catch (error) {
+                // 检查是否是跨域错误
+                if (error.message.includes('CORS') || error.message.includes('fetch') || error.name === 'TypeError') {
+                    return {
+                        success: false,
+                        error: '跨域请求被阻止',
+                        details: {
+                            message: `由于浏览器安全策略，无法直接调用百度翻译API。\n\n解决方案：\n1. 选择一个CORS代理服务\n2. 使用服务器端代理\n3. 在浏览器中禁用CORS检查（仅用于测试）\n\n当前使用的代理: ${corsProxy || '无（直接调用）'}`,
+                            originalError: error.message
+                        }
+                    };
+                }
+                
+                return {
+                    success: false,
+                    error: error.message,
+                    details: error
+                };
+            }
+        }
+
+        // 生成MD5签名
+        function generateSign(str) {
+            // 简化的MD5实现（实际项目中应使用专业的MD5库）
+            return CryptoJS.MD5(str).toString();
+        }
+
+        // 错误码对应的错误信息
+        function getErrorMessage(errorCode) {
+            const errorMessages = {
+                '52001': 'APP ID错误',
+                '52002': '签名错误',
+                '52003': '访问频率受限',
+                '54000': '必填参数为空',
+                '54001': '签名错误',
+                '54003': '访问频率受限',
+                '54004': '账户余额不足',
+                '54005': '长query请求频繁',
+                '58000': '客户端IP非法',
+                '58001': '译文语言方向不支持',
+                '58002': '服务当前已关闭',
+                '90107': '认证未通过或未生效'
+            };
+            
+            return errorMessages[errorCode] || `未知错误 (${errorCode})`;
+        }
+
+        // 显示结果
+        function showResult(type, title, content) {
+            const container = document.getElementById('resultContainer');
+            const section = document.getElementById('resultSection');
+            const titleEl = document.getElementById('resultTitle');
+            const contentEl = document.getElementById('resultContent');
+
+            // 设置样式
+            section.className = type === 'error' ? 'result-section error' : 'result-section';
+            
+            // 设置图标
+            const icon = type === 'error' ? '❌' : '✅';
+            titleEl.textContent = `${icon} ${title}`;
+            
+            // 设置内容
+            contentEl.textContent = content;
+            
+            // 显示容器
+            container.classList.remove('hidden');
+            
+            // 滚动到结果区域
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 清除结果
+        function clearResults() {
+            document.getElementById('resultContainer').classList.add('hidden');
+        }
+
+        // 测试预设文本
+        function testPresetTexts() {
+            const presetTexts = [
+                'Hello, how are you?',
+                '今天天气真好',
+                'This is a test message for translation.',
+                'こんにちは、元気ですか？',
+                'Bonjour, comment allez-vous?'
+            ];
+            
+            const randomText = presetTexts[Math.floor(Math.random() * presetTexts.length)];
+            document.getElementById('sourceText').value = randomText;
+            
+            // 自动设置语言
+            if (/[\u4e00-\u9fa5]/.test(randomText)) {
+                document.getElementById('fromLang').value = 'zh';
+                document.getElementById('toLang').value = 'en';
+            } else if (/[\u3040-\u309f\u30a0-\u30ff]/.test(randomText)) {
+                document.getElementById('fromLang').value = 'ja';
+                document.getElementById('toLang').value = 'zh';
+            } else {
+                document.getElementById('fromLang').value = 'auto';
+                document.getElementById('toLang').value = 'zh';
+            }
+        }
+
+        // 添加到历史记录
+        function addToHistory(record) {
+            testHistory.unshift(record);
+            if (testHistory.length > 10) {
+                testHistory = testHistory.slice(0, 10);
+            }
+            saveHistory();
+            updateHistoryDisplay();
+        }
+
+        // 保存历史记录
+        function saveHistory() {
+            localStorage.setItem('baiduApiHistory', JSON.stringify(testHistory));
+        }
+
+        // 加载历史记录
+        function loadHistory() {
+            const saved = localStorage.getItem('baiduApiHistory');
+            if (saved) {
+                try {
+                    testHistory = JSON.parse(saved);
+                    updateHistoryDisplay();
+                } catch (e) {
+                    testHistory = [];
+                }
+            }
+        }
+
+        // 更新历史记录显示
+        function updateHistoryDisplay() {
+            const container = document.getElementById('historyContainer');
+            const content = document.getElementById('historyContent');
+            
+            if (testHistory.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            
+            content.innerHTML = testHistory.map((record, index) => `
+                <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #007bff;">
+                    <div style="font-weight: bold; color: #007bff; margin-bottom: 8px;">
+                        #${index + 1} - ${record.timestamp}
+                    </div>
+                    <div style="margin-bottom: 5px;">
+                        <strong>原文 (${record.fromLang}):</strong> ${record.source}
+                    </div>
+                    <div>
+                        <strong>译文 (${record.toLang}):</strong> ${record.target}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 清除历史记录
+        function clearHistory() {
+            testHistory = [];
+            localStorage.removeItem('baiduApiHistory');
+            document.getElementById('historyContainer').classList.add('hidden');
+            showResult('success', '历史记录已清除', '所有翻译历史记录已删除');
+        }
+    </script>
+    
+    <!-- 引入CryptoJS库用于MD5签名 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</body>
+</html>

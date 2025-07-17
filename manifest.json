@@ -22,7 +22,7 @@
   
   "content_scripts": [
     {
-      "matches": ["https://*/*"],
+      "matches": ["https://*/*", "file://*/*"],
       "js": ["src/content.js"],
       "css": ["src/content.css"],
       "run_at": "document_end"
@@ -41,9 +41,12 @@
   },
   
   "web_accessible_resources": [
-    {
-      "resources": ["src/utils/*.js"],
-      "matches": ["https://*/*"]
-    }
-  ]
+        {
+            "resources": [
+                "src/utils/*.js",
+                "baidu-api-test.html"
+            ],
+            "matches": ["https://*/*", "file://*/*"]
+        }
+    ]
 }
