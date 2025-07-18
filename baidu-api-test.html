@@ -145,6 +145,15 @@
             background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
         }
 
+        .btn.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #212529;
+        }
+
+        .btn.warning:hover {
+            color: #212529;
+        }
+
         .result-section {
             background: #f8f9fa;
             border-radius: 10px;
@@ -240,6 +249,48 @@
         .col {
             flex: 1;
         }
+
+        .troubleshooting-guide {
+            margin-top: 15px;
+        }
+
+        .trouble-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .trouble-item h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 16px;
+        }
+
+        .trouble-item p {
+            margin: 8px 0;
+            color: #6c757d;
+        }
+
+        .trouble-item ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .trouble-item li {
+            margin: 5px 0;
+            color: #495057;
+        }
+
+        .trouble-item a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .trouble-item a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -283,8 +334,8 @@
                     <label for="corsProxy">CORS代理:</label>
                     <select id="corsProxy">
                         <option value="">直接调用（可能被CORS阻止）</option>
-                        <option value="https://cors-anywhere.herokuapp.com/">cors-anywhere.herokuapp.com</option>
-                        <option value="https://api.allorigins.win/raw?url=">allorigins.win</option>
+                        <option value="https://api.allorigins.win/raw?url=" selected>allorigins.win（推荐，已修复）</option>
+                        <option value="https://cors-anywhere.herokuapp.com/">cors-anywhere.herokuapp.com（需要解锁）</option>
                         <option value="custom">自定义代理</option>
                     </select>
                 </div>
@@ -303,9 +354,22 @@
                     <h4 style="margin: 0 0 8px 0; color: #1976D2;">💡 CORS代理说明</h4>
                     <p style="margin: 0; font-size: 13px; color: #555;">
                         由于浏览器安全策略，直接调用百度翻译API可能被CORS阻止。选择一个代理服务可以解决此问题：<br>
-                        • <strong>cors-anywhere</strong>: 免费但有使用限制<br>
-                        • <strong>allorigins</strong>: 稳定的免费代理服务<br>
-                        • <strong>自定义代理</strong>: 使用您自己的代理服务器
+                        • <strong>cors-anywhere</strong>: 免费但需要先解锁访问权限 
+                          <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" style="color: #2196F3; text-decoration: none;">👆 点击解锁</a><br>
+                        • <strong>allorigins</strong>: 稳定的免费代理服务（推荐）<br>
+                        • <strong>自定义代理</strong>: 使用您自己的代理服务器<br>
+                        <strong style="color: #d9534f;">• 注意:</strong> 公共代理服务可能不稳定或有速率限制，建议用于测试目的。
+                    </p>
+                </div>
+                
+                <div id="corsErrorAlert" class="info-box hidden" style="margin-top: 15px; padding: 10px; background-color: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
+                    <h4 style="margin: 0 0 8px 0; color: #856404;">⚠️ CORS代理访问被拒绝</h4>
+                    <p style="margin: 0; font-size: 13px; color: #856404;">
+                        检测到 cors-anywhere 服务返回403错误。请按以下步骤解决：<br>
+                        1. <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" style="color: #856404; font-weight: bold;">点击这里访问解锁页面</a><br>
+                        2. 点击页面上的 "Request temporary access to the demo server" 按钮<br>
+                        3. 或者切换到 "allorigins" 代理服务（更稳定）<br>
+                        4. 重新尝试翻译
                     </p>
                 </div>
             </div>
@@ -358,6 +422,9 @@
                     </button>
                     <button class="btn" onclick="testPresetTexts()">📝 测试预设文本</button>
                     <button class="btn" onclick="clearResults()">🧹 清除结果</button>
+                    <button class="btn warning" onclick="quickFix()" id="quickFixBtn" style="display: none;">
+                        🔧 快速修复
+                    </button>
                 </div>
             </div>
 
@@ -366,6 +433,54 @@
                 <div class="result-section" id="resultSection">
                     <h3 id="resultTitle">📊 翻译结果</h3>
                     <div class="result-content" id="resultContent"></div>
+                </div>
+            </div>
+
+            <!-- 调试日志区域 -->
+            <div id="debugContainer" class="hidden">
+                <div class="config-section">
+                    <h3>🐞 调试日志</h3>
+                    <div class="result-content" id="debugContent" style="max-height: 300px; overflow-y: auto;"></div>
+                    <button class="btn" onclick="clearDebugLog()">🧹 清除日志</button>
+                </div>
+            </div>
+
+            <!-- 故障排除指南 -->
+            <div class="config-section">
+                <h3>🔧 故障排除指南</h3>
+                <div class="troubleshooting-guide">
+                    <div class="trouble-item">
+                        <h4>❌ 错误码 52003 - 未授权用户</h4>
+                        <p><strong>原因：</strong>APP ID或APP Key错误，或服务未开通</p>
+                        <p><strong>解决方案：</strong></p>
+                        <ul>
+                            <li>检查APP ID和APP Key是否正确填写</li>
+                            <li>登录<a href="https://fanyi-api.baidu.com/manage/developer" target="_blank">百度翻译控制台</a>确认服务状态</li>
+                            <li>新用户需要先开通通用翻译API服务</li>
+                            <li>确认账户余额充足（新用户有免费额度）</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="trouble-item">
+                        <h4>🚫 CORS代理访问被拒绝</h4>
+                        <p><strong>原因：</strong>cors-anywhere服务需要手动解锁</p>
+                        <p><strong>解决方案：</strong></p>
+                        <ul>
+                            <li>访问<a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">cors-anywhere解锁页面</a></li>
+                            <li>点击"Request temporary access"按钮</li>
+                            <li>或切换到allorigins代理（推荐）</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="trouble-item">
+                        <h4>🌐 网络连接问题</h4>
+                        <p><strong>解决方案：</strong></p>
+                        <ul>
+                            <li>检查网络连接是否正常</li>
+                            <li>尝试切换不同的CORS代理</li>
+                            <li>检查防火墙或代理设置</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
@@ -400,6 +515,12 @@
                     customProxyGroup.style.display = 'block';
                 } else {
                     customProxyGroup.style.display = 'none';
+                }
+                
+                // 隐藏CORS错误提示（当用户切换代理时）
+                const corsErrorAlert = document.getElementById('corsErrorAlert');
+                if (corsErrorAlert) {
+                    corsErrorAlert.classList.add('hidden');
                 }
             });
             
@@ -439,7 +560,7 @@
                     const config = JSON.parse(saved);
                     document.getElementById('appId').value = config.appId || '';
                     document.getElementById('appKey').value = config.appKey || '';
-                    document.getElementById('corsProxy').value = config.corsProxy || '';
+                    document.getElementById('corsProxy').value = config.corsProxy || 'https://api.allorigins.win/raw?url=';
                     document.getElementById('customProxy').value = config.customProxy || '';
                     
                     // 处理自定义代理显示
@@ -455,6 +576,9 @@
                 } catch (e) {
                     showResult('error', '配置加载失败', '本地配置数据损坏');
                 }
+            } else {
+                // 首次使用，设置默认代理
+                document.getElementById('corsProxy').value = 'https://api.allorigins.win/raw?url=';
             }
         }
 
@@ -521,6 +645,82 @@
             }
         }
 
+        // 清除调试日志
+        function clearDebugLog() {
+            const debugContainer = document.getElementById('debugContainer');
+            const debugContent = document.getElementById('debugContent');
+            debugContent.innerHTML = '';
+            debugContainer.classList.add('hidden');
+        }
+
+        // 记录调试日志
+        function logDebug(title, data) {
+            const debugContainer = document.getElementById('debugContainer');
+            const debugContent = document.getElementById('debugContent');
+            
+            debugContainer.classList.remove('hidden');
+            
+            const logEntry = document.createElement('div');
+            logEntry.style.marginBottom = '15px';
+            logEntry.innerHTML = `<strong>${title}</strong><pre style="background: #eee; padding: 10px; border-radius: 5px; margin-top: 5px; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(data, null, 2)}</pre>`;
+            
+            debugContent.appendChild(logEntry);
+            debugContent.scrollTop = debugContent.scrollHeight;
+        }
+
+        // 自动诊断功能
+        function diagnoseError(error, corsProxy) {
+            const diagnosis = {
+                problem: '',
+                solutions: [],
+                priority: 'medium'
+            };
+
+            if (error.includes('52003') || error.includes('未授权用户') || error.includes('UNAUTHORIZED USER')) {
+                diagnosis.problem = '百度翻译API认证失败';
+                diagnosis.solutions = [
+                    '检查APP ID是否正确（20位数字）',
+                    '检查APP Key是否正确（32位字符串）',
+                    '登录百度翻译控制台确认服务已开通',
+                    '确认账户余额充足或在免费额度内'
+                ];
+                diagnosis.priority = 'high';
+            } else if (error.includes('403') && corsProxy && corsProxy.includes('cors-anywhere')) {
+                diagnosis.problem = 'CORS代理服务访问被拒绝';
+                diagnosis.solutions = [
+                    '访问 https://cors-anywhere.herokuapp.com/corsdemo 解锁服务',
+                    '切换到 allorigins 代理（推荐）',
+                    '等待一段时间后重试'
+                ];
+                diagnosis.priority = 'high';
+            } else if (error.includes('跨域') || error.includes('CORS') || error.includes('Failed to fetch')) {
+                diagnosis.problem = '跨域请求问题';
+                diagnosis.solutions = [
+                    '选择一个CORS代理服务',
+                    '检查网络连接是否正常',
+                    '尝试切换不同的代理服务'
+                ];
+                diagnosis.priority = 'medium';
+            } else if (error.includes('52001')) {
+                diagnosis.problem = 'APP ID错误';
+                diagnosis.solutions = [
+                    '检查APP ID格式（应为20位数字）',
+                    '确认从百度翻译控制台复制的APP ID正确'
+                ];
+                diagnosis.priority = 'high';
+            } else if (error.includes('52002') || error.includes('54001')) {
+                diagnosis.problem = '签名错误';
+                diagnosis.solutions = [
+                    '检查APP Key是否正确',
+                    '确认没有多余的空格或特殊字符',
+                    '重新生成并保存配置'
+                ];
+                diagnosis.priority = 'high';
+            }
+
+            return diagnosis;
+        }
+
         // 调用百度翻译API
         async function callBaiduTranslateAPI(query, from, to) {
             const appId = currentConfig.appId;
@@ -531,19 +731,25 @@
             const signStr = appId + query + salt + appKey;
             const sign = generateSign(signStr);
             
-            // 构建请求参数（发送时需要对q进行URL编码）
-            const params = new URLSearchParams({
-                q: query,  // URLSearchParams会自动进行URL编码
+            // 构建请求参数
+            const params = {
+                q: query,
                 from: from,
                 to: to,
                 appid: appId,
                 salt: salt,
                 sign: sign
-            });
+            };
 
             // 构建请求URL，考虑CORS代理
             let url = 'https://fanyi-api.baidu.com/api/trans/vip/translate';
             let corsProxy = currentConfig.corsProxy || '';
+            let requestMethod = 'POST';
+            let requestHeaders = {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            };
+            let requestBody = new URLSearchParams(params).toString();
             
             if (corsProxy === 'custom') {
                 corsProxy = currentConfig.customProxy || '';
@@ -551,32 +757,87 @@
             
             if (corsProxy) {
                 if (corsProxy === 'https://api.allorigins.win/raw?url=') {
-                    url = corsProxy + encodeURIComponent(url);
+                    // allorigins.win 使用GET方式，将参数拼接到URL
+                    const paramString = new URLSearchParams(params).toString();
+                    const fullUrl = url + '?' + paramString;
+                    url = corsProxy + encodeURIComponent(fullUrl);
+                    requestMethod = 'GET';
+                    requestHeaders = {
+                        'Accept': 'application/json'
+                    };
+                    requestBody = null;
                 } else {
+                    // 其他代理默认处理
                     url = corsProxy + url;
                 }
             }
             
+            const requestDetails = {
+                method: requestMethod,
+                url: url,
+                headers: requestHeaders,
+                body: requestBody
+            };
+            logDebug('Request Details:', requestDetails);
+
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Accept': 'application/json'
-                    },
-                    body: params.toString()
+                const fetchOptions = {
+                    method: requestMethod,
+                    headers: requestHeaders
+                };
+                
+                if (requestBody) {
+                    fetchOptions.body = requestBody;
+                }
+                
+                const response = await fetch(url, fetchOptions);
+
+                const responseText = await response.text();
+                const responseHeaders = {};
+                response.headers.forEach((value, key) => {
+                    responseHeaders[key] = value;
                 });
 
+                const responseDetails = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: responseHeaders,
+                    body: responseText
+                };
+                logDebug('Response Details:', responseDetails);
+
                 if (!response.ok) {
+                    // 特殊处理 cors-anywhere 的403错误
+                    if (response.status === 403 && corsProxy.includes('cors-anywhere.herokuapp.com')) {
+                        showCorsErrorAlert();
+                        const errorMsg = `CORS代理访问被拒绝 (${response.status}): 请先解锁 cors-anywhere 访问权限或切换到 allorigins 代理`;
+                        const diagnosis = diagnoseError(errorMsg, corsProxy);
+                        logDebug('🔍 自动诊断', `问题: ${diagnosis.problem}\n建议解决方案:\n${diagnosis.solutions.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
+                        throw new Error(errorMsg);
+                    }
                     throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
                 }
 
-                const data = await response.json();
+                const data = JSON.parse(responseText);
                 
                 if (data.error_code) {
+                    let errorMessage = getErrorMessage(data.error_code);
+                    
+                    // 特殊处理52003错误，提供详细的解决方案
+                    if (data.error_code === '52003') {
+                        errorMessage += '\n\n🔧 解决方案：\n1. 检查APP ID是否正确（复制时不要包含多余空格）\n2. 确认已开通百度翻译API服务\n3. 访问百度翻译控制台：https://console.bce.baidu.com/ai/#/ai/machinetranslation/overview/index\n4. 如果是新注册用户，需要先开通"通用翻译API"服务';
+                    }
+                    
+                    // 自动诊断
+                    const fullError = `百度API错误 ${data.error_code}: ${errorMessage}`;
+                    const diagnosis = diagnoseError(fullError, corsProxy);
+                    if (diagnosis.problem) {
+                        logDebug('🔍 自动诊断', `问题: ${diagnosis.problem}\n建议解决方案:\n${diagnosis.solutions.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
+                    }
+                    
                     return {
                         success: false,
-                        error: getErrorMessage(data.error_code),
+                        error: errorMessage,
                         details: data
                     };
                 }
@@ -588,6 +849,12 @@
             } catch (error) {
                 // 检查是否是跨域错误
                 if (error.message.includes('CORS') || error.message.includes('fetch') || error.name === 'TypeError') {
+                    const errorMsg = '跨域请求被阻止';
+                    const diagnosis = diagnoseError(errorMsg, corsProxy);
+                    if (diagnosis.problem) {
+                        logDebug('🔍 自动诊断', `问题: ${diagnosis.problem}\n建议解决方案:\n${diagnosis.solutions.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
+                    }
+                    
                     return {
                         success: false,
                         error: '跨域请求被阻止',
@@ -596,6 +863,12 @@
                             originalError: error.message
                         }
                     };
+                }
+                
+                // 对其他错误也进行诊断
+                const diagnosis = diagnoseError(error.message, corsProxy);
+                if (diagnosis.problem) {
+                    logDebug('🔍 自动诊断', `问题: ${diagnosis.problem}\n建议解决方案:\n${diagnosis.solutions.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
                 }
                 
                 return {
@@ -615,9 +888,10 @@
         // 错误码对应的错误信息
         function getErrorMessage(errorCode) {
             const errorMessages = {
-                '52001': 'APP ID错误',
-                '52002': '签名错误',
-                '52003': '访问频率受限',
+                '52000': '成功',
+                '52001': '请求超时',
+                '52002': '系统错误',
+                '52003': '未授权用户 - 请检查APP ID是否正确，或服务是否开通',
                 '54000': '必填参数为空',
                 '54001': '签名错误',
                 '54003': '访问频率受限',
@@ -632,8 +906,45 @@
             return errorMessages[errorCode] || `未知错误 (${errorCode})`;
         }
 
+        // 显示CORS错误提示
+        function showCorsErrorAlert() {
+            const alertEl = document.getElementById('corsErrorAlert');
+            if (alertEl) {
+                alertEl.classList.remove('hidden');
+                alertEl.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // 全局变量存储最后的错误信息
+        let lastError = null;
+
         // 显示结果
         function showResult(type, title, content) {
+            if (type === 'error') {
+                content += '\n\n👇 请检查下方的调试日志获取详细信息。';
+                
+                // 存储错误信息用于快速修复
+                lastError = content;
+                
+                // 为52003错误添加额外的诊断信息
+                if (content.includes('52003') || content.includes('未授权用户')) {
+                    content += '\n\n🔍 快速诊断：\n• 确认APP ID和APP Key已正确填写\n• 登录百度翻译控制台检查服务状态\n• 新用户需要先开通服务才能使用';
+                }
+                
+                // 显示快速修复按钮
+                const quickFixBtn = document.getElementById('quickFixBtn');
+                if (quickFixBtn) {
+                    quickFixBtn.style.display = 'inline-block';
+                }
+            } else {
+                // 成功时隐藏快速修复按钮
+                const quickFixBtn = document.getElementById('quickFixBtn');
+                if (quickFixBtn) {
+                    quickFixBtn.style.display = 'none';
+                }
+                lastError = null;
+            }
+            
             const container = document.getElementById('resultContainer');
             const section = document.getElementById('resultSection');
             const titleEl = document.getElementById('resultTitle');
@@ -654,6 +965,75 @@
             
             // 滚动到结果区域
             container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 快速修复功能
+        function quickFix() {
+            if (!lastError) {
+                showResult('error', '快速修复', '没有检测到需要修复的错误');
+                return;
+            }
+
+            const corsProxy = document.getElementById('corsProxy').value;
+            
+            if (lastError.includes('52003') || lastError.includes('未授权用户') || lastError.includes('UNAUTHORIZED USER')) {
+                // 52003错误的快速修复
+                showResult('success', '快速修复建议', 
+                    '检测到认证错误，建议执行以下步骤：\n\n' +
+                    '1. 🔍 检查APP ID格式（应为20位数字）\n' +
+                    '2. 🔍 检查APP Key格式（应为32位字符串）\n' +
+                    '3. 🌐 访问百度翻译控制台确认服务状态\n' +
+                    '4. 💰 确认账户余额或免费额度\n\n' +
+                    '👆 请逐一检查上述项目后重新尝试翻译');
+            } else if (lastError.includes('403') && corsProxy && corsProxy.includes('cors-anywhere')) {
+                // CORS代理403错误的快速修复 - 切换到allorigins
+                document.getElementById('corsProxy').value = 'https://api.allorigins.win/raw?url=';
+                showResult('success', '快速修复完成', 
+                    '已自动切换到 allorigins 代理服务\n\n' +
+                    '✅ 新代理: allorigins.win（已修复GET支持）\n' +
+                    '📝 请重新保存配置并尝试翻译');
+            } else if (lastError.includes('跨域') || lastError.includes('CORS') || lastError.includes('Failed to fetch')) {
+                // 跨域错误的智能修复
+                if (!corsProxy || corsProxy === '') {
+                    // 没有代理时，优先使用allorigins
+                    document.getElementById('corsProxy').value = 'https://api.allorigins.win/raw?url=';
+                    showResult('success', '快速修复完成', 
+                        '已自动设置 CORS 代理服务\n\n' +
+                        '✅ 代理: allorigins.win（已修复GET支持）\n' +
+                        '📝 请重新保存配置并尝试翻译');
+                } else if (corsProxy.includes('allorigins')) {
+                    // allorigins失败时切换到cors-anywhere
+                    document.getElementById('corsProxy').value = 'https://cors-anywhere.herokuapp.com/';
+                    showResult('success', '快速修复完成', 
+                        '已切换到备用代理服务\n\n' +
+                        '✅ 新代理: cors-anywhere.herokuapp.com\n' +
+                        '📝 请重新保存配置并尝试翻译\n' +
+                        '⚠️ 注意：如遇403错误，需要先解锁访问权限');
+                } else if (corsProxy.includes('cors-anywhere')) {
+                    // cors-anywhere失败时切换回allorigins
+                    document.getElementById('corsProxy').value = 'https://api.allorigins.win/raw?url=';
+                    showResult('success', '快速修复完成', 
+                        '已切换回主要代理服务\n\n' +
+                        '✅ 新代理: allorigins.win\n' +
+                        '📝 请重新保存配置并尝试翻译');
+                } else {
+                    showResult('success', '快速修复建议', 
+                        '检测到跨域问题，建议尝试：\n\n' +
+                        '1. 🔄 切换到 allorigins.win 代理\n' +
+                        '2. 🔄 切换到 cors-anywhere.herokuapp.com 代理\n' +
+                        '3. 🌐 检查网络连接\n' +
+                        '4. 🔧 检查防火墙设置\n\n' +
+                        '当前代理: ' + corsProxy);
+                }
+            } else {
+                showResult('success', '快速修复建议', 
+                    '未能识别具体错误类型，建议：\n\n' +
+                    '1. 🔍 检查API配置是否正确\n' +
+                    '2. 🌐 检查网络连接\n' +
+                    '3. 📋 查看调试日志获取详细信息\n' +
+                    '4. 🔄 尝试重新保存配置\n' +
+                    '5. 🔄 尝试切换CORS代理');
+            }
         }
 
         // 清除结果

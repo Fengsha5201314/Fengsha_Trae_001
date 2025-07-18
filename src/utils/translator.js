@@ -67,7 +67,7 @@ class TranslationService {
 
   // 调用百度翻译API - 通过background script解决CORS问题
   async callTranslationAPI(text, from, to) {
-    const { appid, key } = this.config;
+    const { appid, key, corsProxy } = this.config;
     
     if (!appid || !key) {
       throw new Error('请先配置百度翻译API密钥');
@@ -84,7 +84,8 @@ class TranslationService {
             text: text,
             config: {
               appid: appid,
-              key: key
+              key: key,
+              corsProxy: corsProxy
             }
           }
         });

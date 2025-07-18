@@ -11,6 +11,10 @@
     "scripting"
   ],
   
+  "optional_permissions": [
+    "microphone"
+  ],
+  
   "host_permissions": [
     "https://*/*",
     "https://fanyi-api.baidu.com/*"

@@ -69,6 +69,15 @@
           <input type="password" id="appKey" placeholder="请输入密钥">
         </div>
         
+        <div class="input-group">
+          <label for="corsProxy">CORS代理服务器:</label>
+          <select id="corsProxy">
+            <option value="https://api.allorigins.win/raw?url=">allorigins.win (推荐)</option>
+            <option value="https://cors-anywhere.herokuapp.com/">cors-anywhere.herokuapp.com</option>
+            <option value="">直接访问 (可能被CORS阻止)</option>
+          </select>
+        </div>
+        
         <div class="button-group">
           <button class="btn-secondary" id="testBtn">测试连接</button>
           <button class="btn-primary" id="saveBtn">保存配置</button>

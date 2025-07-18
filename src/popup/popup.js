@@ -67,11 +67,16 @@ class PopupController {
     try {
       const response = await chrome.runtime.sendMessage({ action: 'GET_CONFIG' });
       if (response.success) {
-        this.config = response.config;
-        this.updateConfigUI();
+        this.config = response.config || {};
+      } else {
+        this.config = {};
       }
+      // 无论是否有配置都要更新UI，确保默认值生效
+      this.updateConfigUI();
     } catch (error) {
       console.error('加载配置失败:', error);
+      this.config = {};
+      this.updateConfigUI();
     }
   }
 
@@ -132,34 +137,33 @@ class PopupController {
       const toggleBtn = document.getElementById('toggleBtn');
       toggleBtn.classList.add('loading');
 
-      if (!this.isActive) {
-        // 开始翻译
-        const response = await chrome.tabs.sendMessage(this.currentTab.id, {
-          action: 'TOGGLE_TRANSLATOR'
-        });
+      // 发送切换消息到content script
+      const response = await chrome.tabs.sendMessage(this.currentTab.id, {
+        action: 'TOGGLE_TRANSLATOR'
+      });
 
-        if (response && response.success) {
-          this.isActive = response.active;
-          this.updateUI();
+      if (response && response.success) {
+        this.isActive = response.active;
+        this.updateUI();
+        if (this.isActive) {
           this.showNotification('语音翻译已启动', 'success');
         } else {
-          throw new Error('启动翻译失败');
-        }
-      } else {
-        // 停止翻译
-        const response = await chrome.tabs.sendMessage(this.currentTab.id, {
-          action: 'TOGGLE_TRANSLATOR'
-        });
-
-        if (response && response.success) {
-          this.isActive = response.active;
-          this.updateUI();
           this.showNotification('语音翻译已停止', 'info');
         }
+      } else {
+        const errorMsg = response?.error || '操作失败';
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error('切换翻译状态失败:', error);
-      this.showNotification('操作失败，请刷新页面后重试', 'error');
+      
+      // 检查是否是content script未注入的问题
+      if (error.message.includes('Could not establish connection') || 
+          error.message.includes('Receiving end does not exist')) {
+        this.showNotification('请刷新页面后重试，或检查页面是否支持该功能', 'error');
+      } else {
+        this.showNotification(`操作失败: ${error.message}`, 'error');
+      }
     } finally {
       const toggleBtn = document.getElementById('toggleBtn');
       toggleBtn.classList.remove('loading');
@@ -182,6 +186,7 @@ class PopupController {
   async saveConfig() {
     const appId = document.getElementById('appId').value.trim();
     const appKey = document.getElementById('appKey').value.trim();
+    const corsProxy = document.getElementById('corsProxy').value;
 
     if (!appId || !appKey) {
       this.showNotification('请填写完整的API配置信息', 'warning');
@@ -196,6 +201,7 @@ class PopupController {
       const config = {
         appid: appId,
         key: appKey,
+        corsProxy: corsProxy,
         timestamp: Date.now()
       };
 
@@ -234,6 +240,7 @@ class PopupController {
   async testConnection() {
     const appId = document.getElementById('appId').value.trim();
     const appKey = document.getElementById('appKey').value.trim();
+    const corsProxy = document.getElementById('corsProxy').value;
 
     if (!appId || !appKey) {
       this.showNotification('请先填写API配置信息', 'warning');
@@ -245,7 +252,7 @@ class PopupController {
       testBtn.classList.add('loading');
       testBtn.textContent = '测试中...';
 
-      // 简单的测试翻译 <mcreference link="https://baidufanyi.apifox.cn/api-26880827" index="2">2</mcreference>
+      // 简单的测试翻译
       const testText = 'Hello';
       const salt = Date.now().toString();
       const sign = this.generateSign(appId, testText, salt, appKey);
@@ -255,7 +262,8 @@ class PopupController {
         q: testText,
         salt: salt,
         sign: sign,
-        signString: appId + testText + salt + appKey
+        signString: appId + testText + salt + appKey,
+        corsProxy: corsProxy
       });
       
       const params = new URLSearchParams({
@@ -267,13 +275,48 @@ class PopupController {
         sign: sign
       });
 
-      const response = await fetch('https://fanyi-api.baidu.com/api/trans/vip/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: params
-      });
+      // 构建请求URL，支持CORS代理
+      let url = 'https://fanyi-api.baidu.com/api/trans/vip/translate';
+      let requestMethod = 'POST';
+      let requestHeaders = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      };
+      let requestBody = params.toString();
+      
+      if (corsProxy) {
+        if (corsProxy === 'https://api.allorigins.win/raw?url=') {
+          // allorigins.win 使用GET方式，将参数拼接到URL
+          const paramString = params.toString();
+          const fullUrl = url + '?' + paramString;
+          url = corsProxy + encodeURIComponent(fullUrl);
+          requestMethod = 'GET';
+          requestHeaders = {
+            'Accept': 'application/json'
+          };
+          requestBody = null;
+        } else {
+          url = corsProxy + url;
+        }
+      }
+      
+      const fetchOptions = {
+        method: requestMethod,
+        headers: requestHeaders
+      };
+      
+      if (requestBody) {
+        fetchOptions.body = requestBody;
+      }
+
+      const response = await fetch(url, fetchOptions);
+      
+      if (!response.ok) {
+        if (response.status === 403 && corsProxy === 'https://cors-anywhere.herokuapp.com/') {
+          throw new Error(`CORS代理访问被拒绝 (403)。建议切换到 allorigins.win 代理或访问 https://cors-anywhere.herokuapp.com/corsdemo 解锁访问权限。`);
+        }
+        throw new Error(`HTTP错误: ${response.status}`);
+      }
 
       const data = await response.json();
       console.log('API响应:', data);
@@ -535,6 +578,9 @@ class PopupController {
     if (this.config.key) {
       document.getElementById('appKey').value = this.config.key;
     }
+    // 设置CORS代理，如果没有配置则使用allorigins.win作为默认值
+    const corsProxy = this.config.corsProxy !== undefined ? this.config.corsProxy : 'https://api.allorigins.win/raw?url=';
+    document.getElementById('corsProxy').value = corsProxy;
     this.validateInputs();
   }
 

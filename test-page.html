@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语音翻译插件测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .test-section h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        
+        .instructions {
+            background: rgba(255, 193, 7, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #FFC107;
+        }
+        
+        .video-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        video {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .status {
+            background: rgba(33, 150, 243, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        
+        .button:hover {
+            background: #45a049;
+        }
+        
+        .button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .test-audio {
+            margin: 10px 0;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 语音翻译插件测试页面</h1>
+        
+        <div class="instructions">
+            <h3>📋 测试说明</h3>
+            <p>1. 确保已安装并启用语音翻译插件</p>
+            <p>2. 点击浏览器工具栏中的插件图标启动翻译功能</p>
+            <p>3. 允许麦克风权限</p>
+            <p>4. 对着麦克风说英语，观察是否出现中文翻译字幕</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 功能测试</h3>
+            
+            <div class="status">
+                <span class="emoji">🔍</span>
+                <strong>插件状态检测：</strong>
+                <span id="plugin-status">检测中...</span>
+            </div>
+            
+            <div class="status">
+                <span class="emoji">🎤</span>
+                <strong>麦克风权限：</strong>
+                <span id="mic-status">检测中...</span>
+            </div>
+            
+            <div class="status">
+                <span class="emoji">🗣️</span>
+                <strong>语音识别支持：</strong>
+                <span id="speech-status">检测中...</span>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎬 测试视频</h3>
+            <p>播放下面的英语视频，然后启动语音翻译功能测试：</p>
+            
+            <div class="video-container">
+                <video controls width="600">
+                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                    您的浏览器不支持视频播放。
+                </video>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 手动测试</h3>
+            <p>建议测试的英语短语：</p>
+            <ul>
+                <li>"Hello, how are you today?"</li>
+                <li>"This is a test of the speech recognition system."</li>
+                <li>"The weather is very nice today."</li>
+                <li>"I love learning new languages."</li>
+                <li>"Technology makes our lives easier."</li>
+            </ul>
+            
+            <div class="test-audio">
+                <button class="button" onclick="testMicrophone()">🎤 测试麦克风</button>
+                <button class="button" onclick="checkPluginStatus()">🔄 重新检测插件</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>❓ 故障排除</h3>
+            <p><strong>如果翻译不工作，请检查：</strong></p>
+            <ul>
+                <li>✅ 插件是否已正确安装和启用</li>
+                <li>✅ 是否已允许麦克风权限</li>
+                <li>✅ 麦克风是否正常工作</li>
+                <li>✅ 网络连接是否正常</li>
+                <li>✅ 是否已配置百度翻译API密钥</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // 检测插件状态
+        function checkPluginStatus() {
+            const statusElement = document.getElementById('plugin-status');
+            
+            // 检查是否有content script注入
+            if (window.VoiceTranslator) {
+                statusElement.textContent = '✅ 插件已加载';
+                statusElement.style.color = '#4CAF50';
+            } else {
+                statusElement.textContent = '❌ 插件未检测到';
+                statusElement.style.color = '#f44336';
+            }
+        }
+        
+        // 检测语音识别支持
+        function checkSpeechRecognition() {
+            const statusElement = document.getElementById('speech-status');
+            
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                statusElement.textContent = '✅ 支持语音识别';
+                statusElement.style.color = '#4CAF50';
+            } else {
+                statusElement.textContent = '❌ 不支持语音识别';
+                statusElement.style.color = '#f44336';
+            }
+        }
+        
+        // 检测麦克风权限
+        async function checkMicrophonePermission() {
+            const statusElement = document.getElementById('mic-status');
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                statusElement.textContent = '✅ 麦克风权限已获取';
+                statusElement.style.color = '#4CAF50';
+                
+                // 停止音频流
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                statusElement.textContent = '❌ 麦克风权限被拒绝';
+                statusElement.style.color = '#f44336';
+            }
+        }
+        
+        // 测试麦克风
+        async function testMicrophone() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                alert('✅ 麦克风测试成功！您可以开始使用语音翻译功能。');
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                alert('❌ 麦克风测试失败：' + error.message);
+            }
+        }
+        
+        // 页面加载时执行检测
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                checkPluginStatus();
+                checkSpeechRecognition();
+                checkMicrophonePermission();
+            }, 1000);
+        });
+        
+        // 定期检查插件状态
+        setInterval(checkPluginStatus, 5000);
+    </script>
+</body>
+</html>

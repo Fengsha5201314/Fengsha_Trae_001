@@ -41,7 +41,7 @@ function stopCapture(tabId) {
 
 // 处理翻译请求 - 解决CORS问题
 async function handleTranslateRequest(text, config) {
-  const { appid, key } = config;
+  const { appid, key, corsProxy } = config;
   
   if (!appid || !key) {
     return { success: false, error: '请先配置百度翻译API密钥' };
@@ -59,45 +59,92 @@ async function handleTranslateRequest(text, config) {
     sign: sign
   });
 
-  try {
-    const response = await fetch('https://fanyi-api.baidu.com/api/trans/vip/translate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: params
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP错误: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    if (data.error_code) {
-      throw new Error(`API错误 ${data.error_code}: ${getErrorMessage(data.error_code)}`);
-    }
-    
-    if (!data.trans_result || !data.trans_result[0]) {
-      throw new Error('翻译结果格式错误');
-    }
-    
-    return {
-      success: true,
-      result: {
-        originalText: text,
-        translatedText: data.trans_result[0].dst,
-        detectedLanguage: data.from || 'auto',
-        timestamp: Date.now()
+  // 支持多种CORS代理方案
+  const corsProxies = [
+    corsProxy || 'https://api.allorigins.win/raw?url=',
+    'https://cors-anywhere.herokuapp.com/',
+    '' // 直接访问作为最后尝试
+  ];
+
+  let lastError;
+  
+  for (const proxy of corsProxies) {
+    try {
+      let url = 'https://fanyi-api.baidu.com/api/trans/vip/translate';
+      let requestMethod = 'POST';
+      let requestHeaders = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      };
+      let requestBody = params.toString();
+      
+      if (proxy) {
+        if (proxy === 'https://api.allorigins.win/raw?url=') {
+          // allorigins.win 使用 GET 请求，将参数拼接到URL
+          const paramString = params.toString();
+          const fullUrl = url + '?' + paramString;
+          url = proxy + encodeURIComponent(fullUrl);
+          requestMethod = 'GET';
+          requestHeaders = {
+            'Accept': 'application/json'
+          };
+          requestBody = null;
+        } else {
+          url = proxy + url;
+        }
       }
-    };
-  } catch (error) {
-    console.error('翻译请求失败:', error);
-    return {
-      success: false,
-      error: error.message
-    };
+      
+      const fetchOptions = {
+        method: requestMethod,
+        headers: requestHeaders
+      };
+      
+      if (requestBody) {
+        fetchOptions.body = requestBody;
+      }
+      
+      const response = await fetch(url, fetchOptions);
+      
+      if (!response.ok) {
+        if (response.status === 403 && proxy === 'https://cors-anywhere.herokuapp.com/') {
+          throw new Error(`CORS代理访问被拒绝 (403)。建议切换到 allorigins.win 代理或访问 https://cors-anywhere.herokuapp.com/corsdemo 解锁访问权限。`);
+        }
+        throw new Error(`HTTP错误: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.error_code) {
+        throw new Error(`API错误 ${data.error_code}: ${getErrorMessage(data.error_code)}`);
+      }
+      
+      if (!data.trans_result || !data.trans_result[0]) {
+        throw new Error('翻译结果格式错误');
+      }
+      
+      return {
+        success: true,
+        result: {
+          originalText: text,
+          translatedText: data.trans_result[0].dst,
+          detectedLanguage: data.from || 'auto',
+          timestamp: Date.now(),
+          usedProxy: proxy || 'direct'
+        }
+      };
+      
+    } catch (error) {
+      console.warn(`使用代理 ${proxy || 'direct'} 失败:`, error.message);
+      lastError = error;
+      continue;
+    }
   }
+  
+  console.error('所有翻译尝试都失败了:', lastError);
+  return {
+    success: false,
+    error: lastError?.message || '翻译请求失败'
+  };
 }
 
 // 生成百度翻译API签名
